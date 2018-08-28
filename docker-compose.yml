@@ -6,7 +6,7 @@ networks:
 services:
 
   ca.orderer.example.com:
-    container_name: ca_orderer
+    container_name: ${COMPOSE_PROJECT_NAME}_ca_orderer
     image: "hyperledger/fabric-ca:1.2.0"
     command: /bin/bash -c '/scripts/start-root-ca.sh 2>&1 | tee /data/logs/ca.orderer.example.com.log'
     environment:
@@ -25,7 +25,7 @@ services:
       - fabric-ca
 
   ca.org1.example.com:
-    container_name: ca_org1
+    container_name: ${COMPOSE_PROJECT_NAME}_ca_org1
     image: "hyperledger/fabric-ca:1.2.0"
     command: /bin/bash -c '/scripts/start-root-ca.sh 2>&1 | tee /data/logs/ca.org1.example.com.log'
     environment:
@@ -44,7 +44,7 @@ services:
       - fabric-ca
 
   ca.org2.example.com:
-    container_name: ca_org2
+    container_name: ${COMPOSE_PROJECT_NAME}_ca_org2
     image: "hyperledger/fabric-ca:1.2.0"
     command: /bin/bash -c '/scripts/start-root-ca.sh 2>&1 | tee /data/logs/ca.org2.example.com.log'
     environment:
@@ -63,7 +63,7 @@ services:
       - fabric-ca
 
   setup:
-    container_name: setup
+    container_name: ${COMPOSE_PROJECT_NAME}_setup
     image: "hyperledger/fabric-ca-tools:1.2.0"
     command: /bin/bash -c '/scripts/setup-fabric.sh 2>&1 | tee /data/logs/setup.log; sleep 99999'
     volumes:
@@ -77,7 +77,7 @@ services:
       - ca.org2.example.com
 
   orderer.example.com:
-    container_name: orderer
+    container_name: ${COMPOSE_PROJECT_NAME}_orderer
     image: "hyperledger/fabric-ca-orderer:1.2.0"
     environment:
       - FABRIC_CA_CLIENT_HOME=/var/hyperledger/orderer
@@ -109,7 +109,7 @@ services:
       - setup
 
   peer0.org1.example.com:
-    container_name: peer0_org1
+    container_name: ${COMPOSE_PROJECT_NAME}_peer0_org1
     image: "hyperledger/fabric-ca-peer:1.2.0"
     environment:
       - FABRIC_CA_CLIENT_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
@@ -153,7 +153,7 @@ services:
       - setup
 
   peer1.org1.example.com:
-    container_name: peer1_org1
+    container_name: ${COMPOSE_PROJECT_NAME}_peer1_org1
     image: "hyperledger/fabric-ca-peer:1.2.0"
     environment:
       - FABRIC_CA_CLIENT_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
@@ -195,7 +195,7 @@ services:
       - setup
 
   peer0.org2.example.com:
-    container_name: peer0_org2
+    container_name: ${COMPOSE_PROJECT_NAME}_peer0_org2
     image: "hyperledger/fabric-ca-peer:1.2.0"
     environment:
       - FABRIC_CA_CLIENT_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
@@ -236,7 +236,7 @@ services:
       - setup
 
   peer1.org2.example.com:
-    container_name: peer1_org2
+    container_name: ${COMPOSE_PROJECT_NAME}_peer1_org2
     image: "hyperledger/fabric-ca-peer:1.2.0"
     environment:
       - FABRIC_CA_CLIENT_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
