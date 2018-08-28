@@ -1,0 +1,298 @@
+version: '2'
+
+networks:
+  fabric-ca:
+
+services:
+
+  ca.orderer.example.com:
+    container_name: ${COMPOSE_PROJECT_NAME}_ca_orderer
+    image: "hyperledger/fabric-ca:1.2.0"
+    command: /bin/bash -c '/scripts/start-root-ca.sh 2>&1 | tee /data/logs/ca.orderer.example.com.log'
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_CSR_CN=ca.orderer.example.com
+      - FABRIC_CA_SERVER_CSR_HOSTS=ca.orderer.example.com
+      - FABRIC_CA_SERVER_DEBUG=true
+      - BOOTSTRAP_USER_PASS=admin:adminpw
+      - TARGET_CERTFILE=/data/orderer-ca-cert.pem
+      - FABRIC_ORGS=orderer org1 org2
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+    networks:
+      - fabric-ca
+
+  ca.org1.example.com:
+    container_name: ${COMPOSE_PROJECT_NAME}_ca_org1
+    image: "hyperledger/fabric-ca:1.2.0"
+    command: /bin/bash -c '/scripts/start-root-ca.sh 2>&1 | tee /data/logs/ca.org1.example.com.log'
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_CSR_CN=ca.org1.example.com
+      - FABRIC_CA_SERVER_CSR_HOSTS=ca.org1.example.com
+      - FABRIC_CA_SERVER_DEBUG=true
+      - BOOTSTRAP_USER_PASS=admin:adminpw
+      - TARGET_CERTFILE=/data/org1-ca-cert.pem
+      - FABRIC_ORGS=orderer org1 org2
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+    networks:
+      - fabric-ca
+
+  ca.org2.example.com:
+    container_name: ${COMPOSE_PROJECT_NAME}_ca_org2
+    image: "hyperledger/fabric-ca:1.2.0"
+    command: /bin/bash -c '/scripts/start-root-ca.sh 2>&1 | tee /data/logs/ca.org2.example.com.log'
+    environment:
+      - FABRIC_CA_SERVER_HOME=/etc/hyperledger/fabric-ca
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_CSR_CN=ca.org2.example.com
+      - FABRIC_CA_SERVER_CSR_HOSTS=ca.org2.example.com
+      - FABRIC_CA_SERVER_DEBUG=true
+      - BOOTSTRAP_USER_PASS=admin:adminpw
+      - TARGET_CERTFILE=/data/org2-ca-cert.pem
+      - FABRIC_ORGS=orderer org1 org2
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+    networks:
+      - fabric-ca
+
+  setup:
+    container_name: ${COMPOSE_PROJECT_NAME}_setup
+    image: "hyperledger/fabric-ca-tools:1.2.0"
+    command: /bin/bash -c '/scripts/setup-fabric.sh 2>&1 | tee /data/logs/setup.log; sleep 99999'
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+    networks:
+      - fabric-ca
+    depends_on:
+      - ca.orderer.example.com
+      - ca.org1.example.com
+      - ca.org2.example.com
+
+  orderer.example.com:
+    container_name: ${COMPOSE_PROJECT_NAME}_orderer
+    image: "hyperledger/fabric-ca-orderer:1.2.0"
+    environment:
+      - FABRIC_CA_CLIENT_HOME=/var/hyperledger/orderer
+      - FABRIC_CA_CLIENT_TLS_CERTFILES=/data/orderer-ca-cert.pem
+      - ENROLLMENT_URL=https://orderer.example.com:orderer.example.compw@ca.orderer.example.com:7054
+      - ORDERER_HOME=/var/hyperledger/orderer
+      - ORDERER_HOST=orderer.example.com
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/data/genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/data/orderer-ca-cert.pem]
+
+      - ORDERER_GENERAL_LOGLEVEL=debug
+      - ORDERER_DEBUG_BROADCASTTRACEDIR=data/logs
+      - ORG=orderer
+      - ORG_ADMIN_CERT=/data/orgs/orderer/msp/admincerts/Admin@orderer.example.com-cert.pem
+    command: /bin/bash -c '/scripts/start-orderer.sh 2>&1 | tee /data/logs/orderer.example.com.log'
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+    networks:
+      - fabric-ca
+    depends_on:
+      - setup
+
+  peer0.org1.example.com:
+    container_name: ${COMPOSE_PROJECT_NAME}_peer0_org1
+    image: "hyperledger/fabric-ca-peer:1.2.0"
+    environment:
+      - FABRIC_CA_CLIENT_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+      - FABRIC_CA_CLIENT_TLS_CERTFILES=/data/org1-ca-cert.pem
+      - ENROLLMENT_URL=https://peer0.org1.example.com:peer0.org1.example.compw@ca.org1.example.com:7054
+      - PEER_NAME=peer0.org1.example.com
+      - PEER_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+      - PEER_HOST=peer0.org1.example.com
+      - PEER_NAME_PASS=peer0.org1.example.com:peer0.org1.example.compw
+      - CORE_PEER_ID=peer0.org1.example.com
+      - CORE_PEER_ADDRESS=peer0.org1.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/msp
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=net_fabric-ca
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/data/org1-ca-cert.pem
+      - CORE_PEER_TLS_CLIENTAUTHREQUIRED=true
+      - CORE_PEER_TLS_CLIENTROOTCAS_FILES=/data/org1-ca-cert.pem
+      - CORE_PEER_TLS_CLIENTCERT_FILE=/data/orgs/org1/peer0/tls/server.crt
+      - CORE_PEER_TLS_CLIENTKEY_FILE=/data/orgs/org1/peer0/tls/server.key
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org1.example.com:7051
+      - CORE_PEER_GOSSIP_SKIPHANDSHAKE=true
+      - ORG=org1
+      - PEER=peer0
+      - ORG_ADMIN_CERT=/data/orgs/org1/msp/admincerts/Admin@org1.example.com-cert.pem
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash -c '/scripts/start-peer.sh 2>&1 | tee /data/logs/peer0.org1.example.com.log'
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+      - /var/run:/host/var/run
+    networks:
+      - fabric-ca
+    depends_on:
+      - setup
+
+  peer1.org1.example.com:
+    container_name: ${COMPOSE_PROJECT_NAME}_peer1_org1
+    image: "hyperledger/fabric-ca-peer:1.2.0"
+    environment:
+      - FABRIC_CA_CLIENT_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+      - FABRIC_CA_CLIENT_TLS_CERTFILES=/data/org1-ca-cert.pem
+      - ENROLLMENT_URL=https://peer1.org1.example.com:peer1.org1.example.compw@ca.org1.example.com:7054
+      - PEER_NAME=peer1.org1.example.com
+      - PEER_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+      - PEER_HOST=peer1.org1.example.com
+      - PEER_NAME_PASS=peer1.org1.example.com:peer1.org1.example.compw
+      - CORE_PEER_ID=peer1.org1.example.com
+      - CORE_PEER_ADDRESS=peer1.org1.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/msp
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=net_fabric-ca
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/data/org1-ca-cert.pem
+
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org1.example.com:7051
+      - CORE_PEER_GOSSIP_SKIPHANDSHAKE=true
+      - ORG=org1
+      - PEER=peer1
+      - ORG_ADMIN_CERT=/data/orgs/org1/msp/admincerts/Admin@org1.example.com-cert.pem
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org1.example.com:7051
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash -c '/scripts/start-peer.sh 2>&1 | tee /data/logs/peer1.org1.example.com.log'
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+      - /var/run:/host/var/run
+    networks:
+      - fabric-ca
+    depends_on:
+      - setup
+
+  peer0.org2.example.com:
+    container_name: ${COMPOSE_PROJECT_NAME}_peer0_org2
+    image: "hyperledger/fabric-ca-peer:1.2.0"
+    environment:
+      - FABRIC_CA_CLIENT_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+      - FABRIC_CA_CLIENT_TLS_CERTFILES=/data/org2-ca-cert.pem
+      - ENROLLMENT_URL=https://peer0.org2.example.com:peer0.org2.example.compw@ca.org2.example.com:7054
+      - PEER_NAME=peer0.org2.example.com
+      - PEER_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+      - PEER_HOST=peer0.org2.example.com
+      - PEER_NAME_PASS=peer0.org2.example.com:peer0.org2.example.compw
+      - CORE_PEER_ID=peer0.org2.example.com
+      - CORE_PEER_ADDRESS=peer0.org2.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org2MSP
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/msp
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=net_fabric-ca
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/data/org2-ca-cert.pem
+
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org2.example.com:7051
+      - CORE_PEER_GOSSIP_SKIPHANDSHAKE=true
+      - ORG=org2
+      - PEER=peer0
+      - ORG_ADMIN_CERT=/data/orgs/org2/msp/admincerts/Admin@org2.example.com-cert.pem
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash -c '/scripts/start-peer.sh 2>&1 | tee /data/logs/peer0.org2.example.com.log'
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+      - /var/run:/host/var/run
+    networks:
+      - fabric-ca
+    depends_on:
+      - setup
+
+  peer1.org2.example.com:
+    container_name: ${COMPOSE_PROJECT_NAME}_peer1_org2
+    image: "hyperledger/fabric-ca-peer:1.2.0"
+    environment:
+      - FABRIC_CA_CLIENT_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+      - FABRIC_CA_CLIENT_TLS_CERTFILES=/data/org2-ca-cert.pem
+      - ENROLLMENT_URL=https://peer1.org2.example.com:peer1.org2.example.compw@ca.org2.example.com:7054
+      - PEER_NAME=peer1.org2.example.com
+      - PEER_HOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+      - PEER_HOST=peer1.org2.example.com
+      - PEER_NAME_PASS=peer1.org2.example.com:peer1.org2.example.compw
+      - CORE_PEER_ID=peer1.org2.example.com
+      - CORE_PEER_ADDRESS=peer1.org2.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org2MSP
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/msp
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=net_fabric-ca
+      - CORE_LOGGING_LEVEL=DEBUG
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/data/org2-ca-cert.pem
+
+      - CORE_PEER_GOSSIP_USELEADERELECTION=true
+      - CORE_PEER_GOSSIP_ORGLEADER=false
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org2.example.com:7051
+      - CORE_PEER_GOSSIP_SKIPHANDSHAKE=true
+      - ORG=org2
+      - PEER=peer1
+      - ORG_ADMIN_CERT=/data/orgs/org2/msp/admincerts/Admin@org2.example.com-cert.pem
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org2.example.com:7051
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash -c '/scripts/start-peer.sh 2>&1 | tee /data/logs/peer1.org2.example.com.log'
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+      - /var/run:/host/var/run
+    networks:
+      - fabric-ca
+    depends_on:
+      - setup
+
+  run:
+    container_name: run
+    image: hyperledger/fabric-ca-tools
+    environment:
+      - GOPATH=/opt/gopath
+    command: /bin/bash -c 'sleep 3;/scripts/run-fabric.sh 2>&1 | tee /data/logs/run.log; sleep 99999'
+    volumes:
+      - ./scripts:/scripts
+      - ./data:/data
+      - /home/ubuntu/fabric-samples:/opt/gopath/src/github.com/hyperledger/fabric-samples
+      - /src/github.com/hyperledger/fabric:/opt/gopath/src/github.com/hyperledger/fabric
+    networks:
+      - fabric-ca
+    depends_on:
+      - orderer.example.com
+      - peer0.org1.example.com
+      - peer1.org1.example.com
+      - peer0.org2.example.com
+      - peer1.org2.example.com
