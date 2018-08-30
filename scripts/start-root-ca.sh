@@ -11,6 +11,7 @@ set -e
 fabric-ca-server init -b $BOOTSTRAP_USER_PASS
 
 # Copy the root CA's signing certificate to the data directory to be used by others
+mkdir -p $TARGET
 cp $FABRIC_CA_SERVER_HOME/ca-cert.pem $TARGET_CERTFILE
 
 # Add the custom orgs
