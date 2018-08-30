@@ -172,6 +172,7 @@ function initPeerOrgVars {
    ORG_ADMIN_CERT=${ORG_MSP_DIR}/admincerts/${ORG_ADMIN_CERT_FILENAME}
    ORG_ADMIN_HOME=/${ORG_DIR}/users/Admin@${DOMAIN}
 
+   ORG_USER1_CERT_FILENAME=USER1@${DOMAIN}-cert.pem
    ORG_USER1_HOME=/${ORG_DIR}/users/USER1@${DOMAIN}
    ORG_USER1_CERT_FILENAME=USER1@${DOMAIN}-cert.pem
 
@@ -288,11 +289,12 @@ function switchToAdminIdentity {
       export FABRIC_CA_CLIENT_HOME=$ORG_ADMIN_HOME
       export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
       fabric-ca-client enroll -d -u https://$ADMIN_NAME:$ADMIN_PASS@$CA_HOST:7054
-      mv $ORG_ADMIN_HOME/msp/cacerts/* $ORG_ADMIN_HOME/msp/cacerts/${CA_HOST}-cert.pem #rename
+      mv $ORG_ADMIN_HOME/msp/cacerts/* $ORG_ADMIN_HOME/msp/cacerts/${CA_HOST}-cert.pem #rename cacert
+      mv $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_HOME/msp/signcerts/$ORG_ADMIN_CERT_FILENAME #rename signcert
       # If admincerts are required in the MSP, copy the cert there now and to my local MSP also
       if [ $ADMINCERTS ]; then
          mkdir -p $(dirname "${ORG_ADMIN_CERT}")
-         mv $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_HOME/msp/signcerts/$ORG_ADMIN_CERT_FILENAME #rename
+
          cp $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_CERT #ORG_MSP_DIR/admincerts
          mkdir $ORG_ADMIN_HOME/msp/admincerts
          cp $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_HOME/msp/admincerts
@@ -312,7 +314,8 @@ function switchToUserIdentity {
       log "Enrolling user for organization $ORG with home directory $FABRIC_CA_CLIENT_HOME ..."
       export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
       fabric-ca-client enroll -d -u https://$USER_NAME:$USER_PASS@$CA_HOST:7054
-      mv $CORE_PEER_MSPCONFIGPATH/cacerts/* $CORE_PEER_MSPCONFIGPATH/cacerts/${CA_HOST}-cert.pem
+      mv $CORE_PEER_MSPCONFIGPATH/cacerts/* $CORE_PEER_MSPCONFIGPATH/cacerts/${CA_HOST}-cert.pem #rename cacert
+      mv $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_HOME/msp/signcerts/$ORG_USER1_CERT_FILENAME #rename signcert
       # Set up admincerts directory if required
       if [ $ADMINCERTS ]; then
          ACDIR=$CORE_PEER_MSPCONFIGPATH/admincerts

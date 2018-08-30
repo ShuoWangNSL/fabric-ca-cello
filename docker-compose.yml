@@ -17,6 +17,7 @@ services:
       - FABRIC_CA_SERVER_DEBUG=true
       - BOOTSTRAP_USER_PASS=admin:adminpw
       - TARGET=/data/crypto-config/ordererOrganizations/example.com/ca
+      - TLSTARGET=/data/crypto-config/peerOrganizations/org1.example.com/tlsca
       - TARGET_CERTFILE=/data/crypto-config/ordererOrganizations/example.com/ca/ca.example.com-cert.pem
       - FABRIC_ORGS=orderer org1 org2
     volumes:
@@ -37,6 +38,7 @@ services:
       - FABRIC_CA_SERVER_DEBUG=true
       - BOOTSTRAP_USER_PASS=admin:adminpw
       - TARGET=/data/crypto-config/peerOrganizations/org1.example.com/ca
+      - TLSTARGET=/data/crypto-config/peerOrganizations/org1.example.com/tlsca
       - TARGET_CERTFILE=/data/crypto-config/peerOrganizations/org1.example.com/ca/ca.org1.example.com-cert.pem
       - FABRIC_ORGS=orderer org1 org2
     volumes:
@@ -57,6 +59,7 @@ services:
       - FABRIC_CA_SERVER_DEBUG=true
       - BOOTSTRAP_USER_PASS=admin:adminpw
       - TARGET=/data/crypto-config/peerOrganizations/org2.example.com/ca
+      - TLSTARGET=/data/crypto-config/peerOrganizations/org2.example.com/tlsca
       - TARGET_CERTFILE=/data/crypto-config/peerOrganizations/org2.example.com/ca/ca.org2.example.com-cert.pem
       - FABRIC_ORGS=orderer org1 org2
     volumes:
