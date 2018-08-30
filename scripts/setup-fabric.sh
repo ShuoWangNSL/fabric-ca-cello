@@ -15,8 +15,8 @@ function main {
    log "Beginning building channel artifacts ..."
    registerIdentities
    enrollIdentities
-   makeConfigTxYaml
-   generateChannelArtifacts
+   #makeConfigTxYaml
+   #generateChannelArtifacts
    log "Finished building channel artifacts"
    touch /$SETUP_SUCCESS_FILE
 }
@@ -44,7 +44,7 @@ function enrollIdentities {
 
 # Register any identities associated with the orderer
 function registerOrdererIdentities {
-   initOrgVars $ORDERER_ORGS
+   initOrdererOrgVars $ORDERER_ORGS
    enrollCAAdmin
    initOrdererVars $ORDERER_ORGS
    log "Registering $ORDERER_NAME with $CA_NAME"
@@ -57,7 +57,7 @@ function registerOrdererIdentities {
 # Register any identities associated with a peer
 function registerPeerIdentities {
    for ORG in $PEER_ORGS; do
-      initOrgVars $ORG
+      initPeerOrgVars $ORG
       enrollCAAdmin
       local COUNT=1
       while [[ "$COUNT" -le $NUM_PEERS ]]; do
@@ -77,7 +77,7 @@ function registerPeerIdentities {
 function enrollOrdererIdentities {
    log "Getting CA certificates ..."
    for ORG in $ORDERER_ORGS; do
-      initOrgVars $ORG
+      initOrdererOrgVars $ORG
       log "Getting CA certs for organization $ORG and storing in $ORG_MSP_DIR"
       export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
       fabric-ca-client getcacert -d -u https://$CA_HOST:7054 -M $ORG_MSP_DIR
@@ -93,7 +93,7 @@ function enrollOrdererIdentities {
 function enrollPeerIdentities {
    log "Getting CA certificates ..."
    for ORG in $PEER_ORGS; do
-      initOrgVars $ORG
+      initPeerOrgVars $ORG
       log "Getting CA certs for organization $ORG and storing in $ORG_MSP_DIR"
       export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
       fabric-ca-client getcacert -d -u https://$CA_HOST:7054 -M $ORG_MSP_DIR
@@ -123,7 +123,7 @@ function printOrg {
 
 # printOrdererOrg <ORG>
 function printOrdererOrg {
-   initOrgVars $1
+   initOrdererOrgVars $1
    printOrg
 }
 
@@ -233,7 +233,7 @@ Profiles:
       Organizations:"
 
    for ORG in $ORDERER_ORGS; do
-      initOrgVars $ORG
+      initOrdererOrgVars $ORG
       echo "        - *${ORG_CONTAINER_NAME}"
    done
 
@@ -245,7 +245,7 @@ Profiles:
         Organizations:"
 
    for ORG in $PEER_ORGS; do
-      initOrgVars $ORG
+      initPeerOrgVars $ORG
       echo "          - *${ORG_CONTAINER_NAME}"
    done
 
@@ -257,7 +257,7 @@ Profiles:
       Organizations:"
 
    for ORG in $PEER_ORGS; do
-      initOrgVars $ORG
+      initPeerOrgVars $ORG
       echo "        - *${ORG_CONTAINER_NAME}"
    done
 
@@ -287,7 +287,7 @@ function generateChannelArtifacts() {
   fi
 
   for ORG in $PEER_ORGS; do
-     initOrgVars $ORG
+     initPeerOrgVars $ORG
      log "Generating anchor peer update transaction for $ORG at $ANCHOR_TX_FILE"
      configtxgen -profile OrgsChannel -outputAnchorPeersUpdate $ANCHOR_TX_FILE \
                  -channelID $CHANNEL_NAME -asOrg $ORG

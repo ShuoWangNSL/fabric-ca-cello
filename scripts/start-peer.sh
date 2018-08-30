@@ -22,24 +22,27 @@ TLSDIR=$PEER_HOME/tls
 mkdir -p $TLSDIR
 cp /tmp/tls/signcerts/* $CORE_PEER_TLS_CERT_FILE
 cp /tmp/tls/keystore/* $CORE_PEER_TLS_KEY_FILE
-mkdir -p /data/orgs/${ORG}/${PEER}/tls
-cp $CORE_PEER_TLS_KEY_FILE /data/orgs/${ORG}/${PEER}/tls/server.key
-cp $CORE_PEER_TLS_CERT_FILE /data/orgs/${ORG}/${PEER}/tls/server.crt
-cp /data/${ORG}-ca-cert.pem /data/orgs/${ORG}/${PEER}/tls/ca.crt
+DATA_DIR=/${CRYPTO_PEER}/${DOMAIN}/peers/${PEER}.${DOMAIN}
+DATA_TLSDIR=/${DATA_DIR}/tls
+mkdir -p ${DATA_TLSDIR}
+cp $CORE_PEER_TLS_KEY_FILE ${DATA_TLSDIR}/server.key
+cp $CORE_PEER_TLS_CERT_FILE ${DATA_TLSDIR}server.crt
+cp $FABRIC_CA_CLIENT_TLS_CERTFILES ${DATA_TLSDIR}/ca.crt
 rm -rf /tmp/tls
 
 
 # Enroll the peer to get an enrollment certificate and set up the core's local MSP directory
 fabric-ca-client enroll -d -u $ENROLLMENT_URL -M $CORE_PEER_MSPCONFIGPATH
-mv ${CORE_PEER_MSPCONFIGPATH}/cacerts/* ${CORE_PEER_MSPCONFIGPATH}/cacerts/ca.${ORG}.example.com-cert.pem
+mv ${CORE_PEER_MSPCONFIGPATH}/cacerts/* ${CORE_PEER_MSPCONFIGPATH}/cacerts/ca.${DOMAIN}-cert.pem
 
 finishMSPSetup $CORE_PEER_MSPCONFIGPATH
+
+ORG_ADMIN_CERT=/${CRYPTO_PEER}/${DOMAIN}/msp/admincerts/Admin@${DOMAIN}-cert.pem
 copyAdminCert $CORE_PEER_MSPCONFIGPATH
 
-mkdir -p /data/orgs/${ORG}/${PEER}
-cp -r ${CORE_PEER_MSPCONFIGPATH} /data/orgs/${ORG}/${PEER}
+cp -r ${CORE_PEER_MSPCONFIGPATH} ${DATA_DIR}
 
 # Start the peer
-log "Starting peer '$CORE_PEER_ID' with MSP at '$CORE_PEER_MSPCONFIGPATH'"
-env | grep CORE
-peer node start
+#log "Starting peer '$CORE_PEER_ID' with MSP at '$CORE_PEER_MSPCONFIGPATH'"
+#env | grep CORE
+#peer node start

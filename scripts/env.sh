@@ -36,10 +36,11 @@ ADMINCERTS=true
 NUM_ORDERERS=1
 
 # The volume mount to share data between containers
+#DATA=data/${COMPOSE_PROJECT_NAME}
 DATA=data
-DATA_CRYPTO=data/crypto-config
-DATA_CRYPTO_ORDERER=data/crypto-config/ordererOrganizations/example.com
-DATA_CRYPTO_PEER=data/crypto-config/peerOrganizations
+CRYPTO=${DATA}/crypto-config
+CRYPTO_ORDERER=${CRYPTO}/ordererOrganizations
+CRYPTO_PEER=${CRYPTO}/peerOrganizations
 
 # The path to the genesis block
 GENESIS_BLOCK_FILE=/$DATA/genesis.block
@@ -88,16 +89,17 @@ CONFIG_BLOCK_FILE=/tmp/config_block.pb
 # Update config block payload file path
 CONFIG_UPDATE_ENVELOPE_FILE=/tmp/config_update_as_envelope.pb
 
-# initOrgVars <ORG>
-function initOrgVars {
+
+function initOrdererOrgVars {
    if [ $# -ne 1 ]; then
-      echo "Usage: initOrgVars <ORG>"
+      echo "Usage: initOrdererOrgVars <ORG>"
       exit 1
    fi
    ORG=$1
    ORG_CONTAINER_NAME=${ORG//./-}
-   ROOT_CA_HOST=ca.${ORG}.example.com
-   ROOT_CA_NAME=ca.${ORG}.example.com
+   DOMAIN=example.com
+   ROOT_CA_HOST=ca.${DOMAIN}
+   ROOT_CA_NAME=ca.${DOMAIN}
    ROOT_CA_LOGFILE=$LOGDIR/${ROOT_CA_NAME}.log
 
    # Root CA admin identity
@@ -112,34 +114,86 @@ function initOrgVars {
    USER_NAME=user-${ORG}
    USER_PASS=${USER_NAME}pw
 
-   ROOT_CA_CERTFILE=/${DATA}/${ORG}-ca-cert.pem
-   ANCHOR_TX_FILE=/${DATA}/orgs/${ORG}/anchors.tx
-   ORG_MSP_ID=${ORG}MSP
-   ORG_MSP_DIR=/${DATA}/orgs/${ORG}/msp
-   ORG_ADMIN_CERT=${ORG_MSP_DIR}/admincerts/Admin@${ORG}.example.com-cert.pem
-   ORG_ADMIN_HOME=/${DATA}/orgs/$ORG/admin
-   ORG_ADMIN_CERT_FILE=Admin@${ORG}.example.com-cert.pem
 
-   ORDERER_ADMIN_CERT=${ORG_MSP_DIR}/admincerts/Admin@example.com-cert.pem
-   ORDERER_ADMIN_CERT_FILE=Admin@example.com-cert.pem
+   ORG_DIR=${CRYPTO_ORDERER}/${DOMAIN}
+   ROOT_CA_CERTFILE=/${ORG_DIR}/ca/${ROOT_CA_HOST}-cert.pem
+   ANCHOR_TX_FILE=/${CRYPTO_ORDERER}/${DOMAIN}/anchors.tx
+   ORG_MSP_ID=${ORG}MSP
+   ORG_MSP_DIR=/${ORG_DIR}/msp
+   ORG_ADMIN_CERT_FILENAME=Admin@${DOMAIN}-cert.pem
+   ORG_ADMIN_CERT=${ORG_MSP_DIR}/admincerts/${ORG_ADMIN_CERT_FILENAME}
+   ORG_ADMIN_HOME=/${ORG_DIR}/users/Admin@${DOMAIN}
 
    CA_NAME=$ROOT_CA_NAME
    CA_HOST=$ROOT_CA_HOST
+   TLSCA_HOST=tls${CA_HOST}
+   CA_CHAINFILE=$ROOT_CA_CERTFILE
+   CA_ADMIN_USER_PASS=$ROOT_CA_ADMIN_USER_PASS
+   CA_LOGFILE=$ROOT_CA_LOGFILE
+
+   #ORDERER_ADMIN_CERT=${ORG_MSP_DIR}/admincerts/Admin@example.com-cert.pem
+   #ORDERER_ADMIN_CERT_FILE=Admin@example.com-cert.pem
+
+}
+
+
+
+function initPeerOrgVars {
+   if [ $# -ne 1 ]; then
+      echo "Usage: initPeerOrgVars <ORG>"
+      exit 1
+   fi
+   ORG=$1
+   ORG_CONTAINER_NAME=${ORG//./-}
+   DOMAIN=${ORG}.example.com
+
+   ROOT_CA_HOST=ca.${DOMAIN}
+   ROOT_CA_NAME=ca.${DOMAIN}
+   ROOT_CA_LOGFILE=$LOGDIR/${ROOT_CA_NAME}.log
+
+   # Root CA admin identity
+   ROOT_CA_ADMIN_USER=admin
+   ROOT_CA_ADMIN_PASS=${ROOT_CA_ADMIN_USER}pw
+   ROOT_CA_ADMIN_USER_PASS=${ROOT_CA_ADMIN_USER}:${ROOT_CA_ADMIN_PASS}
+
+   # Admin identity for the org
+   ADMIN_NAME=admin-${ORG}
+   ADMIN_PASS=${ADMIN_NAME}pw
+   # Typical user identity for the org
+   USER_NAME=user-${ORG}
+   USER_PASS=${USER_NAME}pw
+
+   ORG_DIR=${CRYPTO_PEER}/${DOMAIN}
+   ROOT_CA_CERTFILE=/${ORG_DIR}/ca/${ROOT_CA_HOST}-cert.pem
+   ANCHOR_TX_FILE=/${ORG_DIR}/anchors.tx
+   ORG_MSP_ID=${ORG}MSP
+   ORG_MSP_DIR=/${ORG_DIR}/msp
+   ORG_ADMIN_CERT_FILENAME=Admin@${DOMAIN}-cert.pem
+   ORG_ADMIN_CERT=${ORG_MSP_DIR}/admincerts/${ORG_ADMIN_CERT_FILENAME}
+   ORG_ADMIN_HOME=/${ORG_DIR}/users/Admin@${DOMAIN}
+
+   ORG_USER1_HOME=/${ORG_DIR}/users/USER1@${DOMAIN}
+   ORG_USER1_CERT_FILENAME=USER1@${DOMAIN}-cert.pem
+
+   CA_NAME=$ROOT_CA_NAME
+   CA_HOST=$ROOT_CA_HOST
+   TLSCA_HOST=tls${CA_HOST}
    CA_CHAINFILE=$ROOT_CA_CERTFILE
    CA_ADMIN_USER_PASS=$ROOT_CA_ADMIN_USER_PASS
    CA_LOGFILE=$ROOT_CA_LOGFILE
 
 }
 
-# initOrdererVars <NUM>
+
 function initOrdererVars {
    if [ $# -ne 1 ]; then
       echo "Usage: initOrdererVars <ORG>"
       exit 1
    fi
-   initOrgVars $1
-   ORDERER_HOST=${ORG}.example.com
-   ORDERER_NAME=${ORG}.example.com
+   initOrdererOrgVars $1
+   DOMAIN=example.com
+   ORDERER_HOST=${ORG}.${DOMAIN}
+   ORDERER_NAME=${ORG}.${DOMAIN}
    ORDERER_PASS=${ORDERER_NAME}pw
    ORDERER_NAME_PASS=${ORDERER_NAME}:${ORDERER_PASS}
    ORDERER_LOGFILE=$LOGDIR/${ORDERER_NAME}.log
@@ -160,24 +214,6 @@ function initOrdererVars {
    export ORDERER_GENERAL_TLS_ROOTCAS=[$CA_CHAINFILE]
 }
 
-function genClientTLSCert {
-   if [ $# -ne 3 ]; then
-      echo "Usage: genClientTLSCert <host name> <cert file> <key file>: $*"
-      exit 1
-   fi
-
-   HOST_NAME=$1
-   CERT_FILE=$2
-   KEY_FILE=$3
-
-   # Get a client cert
-   fabric-ca-client enroll -d --enrollment.profile tls -u $ENROLLMENT_URL -M /tmp/tls --csr.hosts $HOST_NAME
-
-   mkdir /$DATA/tls || true
-   cp /tmp/tls/signcerts/* $CERT_FILE
-   cp /tmp/tls/keystore/* $KEY_FILE
-   rm -rf /tmp/tls
-}
 
 # initPeerVars <ORG> <NUM>
 function initPeerVars {
@@ -185,14 +221,15 @@ function initPeerVars {
       echo "Usage: initPeerVars <ORG> <NUM>: $*"
       exit 1
    fi
-   initOrgVars $1
+   initPeerOrgVars $1
    NUM=$2
-   PEER_HOST=peer${NUM}.${ORG}.example.com
-   PEER_NAME=peer${NUM}.${ORG}.example.com
+
+   PEER_HOST=peer${NUM}.${DOMAIN}
+   PEER_NAME=peer${NUM}.${DOMAIN}
    PEER_PASS=${PEER_NAME}pw
    PEER_NAME_PASS=${PEER_NAME}:${PEER_PASS}
    PEER_LOGFILE=$LOGDIR/${PEER_NAME}.log
-   MYHOME=/opt/gopath/src/github.com/hyperledger/fabric/peer
+   MYHOME=/etc/hyperledger/fabric
    TLSDIR=$MYHOME/tls
 
    export FABRIC_CA_CLIENT=$MYHOME
@@ -224,6 +261,25 @@ function initPeerVars {
    export ORDERER_CONN_ARGS="$ORDERER_PORT_ARGS --keyfile $CORE_PEER_TLS_CLIENTKEY_FILE --certfile $CORE_PEER_TLS_CLIENTCERT_FILE"
 }
 
+function genClientTLSCert {
+   if [ $# -ne 3 ]; then
+      echo "Usage: genClientTLSCert <host name> <cert file> <key file>: $*"
+      exit 1
+   fi
+
+   HOST_NAME=$1
+   CERT_FILE=$2
+   KEY_FILE=$3
+
+   # Get a client cert
+   fabric-ca-client enroll -d --enrollment.profile tls -u $ENROLLMENT_URL -M /tmp/tls --csr.hosts $HOST_NAME
+
+   mkdir /$DATA/tls || true
+   cp /tmp/tls/signcerts/* $CERT_FILE
+   cp /tmp/tls/keystore/* $KEY_FILE
+   rm -rf /tmp/tls
+}
+
 # Switch to the current org's admin identity.  Enroll if not previously enrolled.
 function switchToAdminIdentity {
    if [ ! -d $ORG_ADMIN_HOME ]; then
@@ -232,12 +288,12 @@ function switchToAdminIdentity {
       export FABRIC_CA_CLIENT_HOME=$ORG_ADMIN_HOME
       export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
       fabric-ca-client enroll -d -u https://$ADMIN_NAME:$ADMIN_PASS@$CA_HOST:7054
-      mv $ORG_ADMIN_HOME/msp/cacerts/* $ORG_ADMIN_HOME/msp/cacerts/${CA_HOST}-cert.pem
+      mv $ORG_ADMIN_HOME/msp/cacerts/* $ORG_ADMIN_HOME/msp/cacerts/${CA_HOST}-cert.pem #rename
       # If admincerts are required in the MSP, copy the cert there now and to my local MSP also
       if [ $ADMINCERTS ]; then
          mkdir -p $(dirname "${ORG_ADMIN_CERT}")
-         cp $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_CERT
-         mv $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_HOME/msp/signcerts/$ORG_ADMIN_CERT_FILE
+         mv $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_HOME/msp/signcerts/$ORG_ADMIN_CERT_FILENAME #rename
+         cp $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_CERT #ORG_MSP_DIR/admincerts
          mkdir $ORG_ADMIN_HOME/msp/admincerts
          cp $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_HOME/msp/admincerts
       fi
@@ -249,7 +305,7 @@ function switchToAdminIdentity {
 
 # Switch to the current org's user identity.  Enroll if not previously enrolled.
 function switchToUserIdentity {
-   export FABRIC_CA_CLIENT_HOME=/etc/hyperledger/fabric/orgs/$ORG/user
+   export FABRIC_CA_CLIENT_HOME=$ORG_USER1_HOME
    export CORE_PEER_MSPCONFIGPATH=$FABRIC_CA_CLIENT_HOME/msp
    if [ ! -d $FABRIC_CA_CLIENT_HOME ]; then
       dowait "$CA_NAME to start" 60 $CA_LOGFILE $CA_CHAINFILE
@@ -263,8 +319,8 @@ function switchToUserIdentity {
          mkdir -p $ACDIR
          cp $ORG_ADMIN_HOME/msp/signcerts/* $ACDIR
       fi
-      mkdir -p /${DATA}/orgs/$ORG/user
-      cp -r $CORE_PEER_MSPCONFIGPATH /${DATA}/orgs/$ORG/user
+      #mkdir -p /${DATA}/orgs/$ORG/user
+      #cp -r $CORE_PEER_MSPCONFIGPATH /${DATA}/orgs/$ORG/user
    fi
 }
 
@@ -310,6 +366,7 @@ function finishMSPSetup {
    if [ ! -d $1/tlscacerts ]; then
       mkdir $1/tlscacerts
       cp $1/cacerts/* $1/tlscacerts
+      #mv $1/tlscacerts/* $1/tlscacerts/${TLSCA_HOST}-cert.pem
    fi
 }
 
