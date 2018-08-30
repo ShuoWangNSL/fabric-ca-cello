@@ -315,7 +315,7 @@ function switchToUserIdentity {
       export FABRIC_CA_CLIENT_TLS_CERTFILES=$CA_CHAINFILE
       fabric-ca-client enroll -d -u https://$USER_NAME:$USER_PASS@$CA_HOST:7054
       mv $CORE_PEER_MSPCONFIGPATH/cacerts/* $CORE_PEER_MSPCONFIGPATH/cacerts/${CA_HOST}-cert.pem #rename cacert
-      mv $ORG_ADMIN_HOME/msp/signcerts/* $ORG_ADMIN_HOME/msp/signcerts/$ORG_USER1_CERT_FILENAME #rename signcert
+      mv $CORE_PEER_MSPCONFIGPATH/signcerts/* $CORE_PEER_MSPCONFIGPATH/signcerts/$ORG_USER1_CERT_FILENAME #rename signcert
       # Set up admincerts directory if required
       if [ $ADMINCERTS ]; then
          ACDIR=$CORE_PEER_MSPCONFIGPATH/admincerts
