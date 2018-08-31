@@ -37,7 +37,7 @@ mkdir -p ${CORE_PEER_MSPCONFIGPATH}
 
 fabric-ca-client enroll -d -u $ENROLLMENT_URL -M $CORE_PEER_MSPCONFIGPATH
 mv ${CORE_PEER_MSPCONFIGPATH}/cacerts/* ${CORE_PEER_MSPCONFIGPATH}/cacerts/ca.${DOMAIN}-cert.pem #rename cacert
-mv ${CORE_PEER_MSPCONFIGPATH}/signcerts/* ${CORE_PEER_MSPCONFIGPATH}/signcerts/${PEER}.${DOMAIN}-cert.pem #rename signcert
+#mv ${CORE_PEER_MSPCONFIGPATH}/signcerts/* ${CORE_PEER_MSPCONFIGPATH}/signcerts/${PEER}.${DOMAIN}-cert.pem #rename signcert
 
 finishMSPSetup $CORE_PEER_MSPCONFIGPATH
 
@@ -46,6 +46,7 @@ copyAdminCert $CORE_PEER_MSPCONFIGPATH
 
 cp -r ${CORE_PEER_MSPCONFIGPATH} ${DATA_DIR}
 
+sleep 9999
 # Start the peer
 #log "Starting peer '$CORE_PEER_ID' with MSP at '$CORE_PEER_MSPCONFIGPATH'"
 #env | grep CORE

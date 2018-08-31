@@ -31,7 +31,7 @@ rm -rf /tmp/tls
 # Enroll again to get the orderer's enrollment certificate (default profile)
 fabric-ca-client enroll -d -u $ENROLLMENT_URL -M $ORDERER_GENERAL_LOCALMSPDIR
 mv $ORDERER_GENERAL_LOCALMSPDIR/cacerts/* $ORDERER_GENERAL_LOCALMSPDIR/cacerts/ca.${DOMAIN}-cert.pem #rename cacert
-mv $ORDERER_GENERAL_LOCALMSPDIR/signcerts/* $ORDERER_GENERAL_LOCALMSPDIR/signcerts/${ORDERER}.${DOMAIN}-cert.pem #rename signcert
+#v $ORDERER_GENERAL_LOCALMSPDIR/signcerts/* $ORDERER_GENERAL_LOCALMSPDIR/signcerts/${ORDERER}.${DOMAIN}-cert.pem #rename signcert
 
 # Finish setting up the local MSP for the orderer
 finishMSPSetup $ORDERER_GENERAL_LOCALMSPDIR
@@ -40,6 +40,7 @@ ORG_ADMIN_CERT=/${CRYPTO_ORDERER}/${DOMAIN}/msp/admincerts/Admin@${DOMAIN}-cert.
 copyAdminCert $ORDERER_GENERAL_LOCALMSPDIR
 cp -r $ORDERER_GENERAL_LOCALMSPDIR ${DATA_DIR}
 
+sleep 9999
 # Wait for the genesis block to be created
 #dowait "genesis block to be created" 60 $SETUP_LOGFILE $ORDERER_GENERAL_GENESISFILE
 
