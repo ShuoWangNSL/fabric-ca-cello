@@ -16,7 +16,7 @@ awaitSetup
 
 # Generate server TLS cert and key pair for the peer
 fabric-ca-client enroll -d --enrollment.profile tls -u $ENROLLMENT_URL -M /tmp/tls --csr.hosts $PEER_HOST
-
+rm -rf $PEER_HOME
 # Copy the TLS key and cert to the appropriate place
 TLSDIR=$PEER_HOME/tls
 mkdir -p $TLSDIR
@@ -32,6 +32,9 @@ rm -rf /tmp/tls
 
 
 # Enroll the peer to get an enrollment certificate and set up the core's local MSP directory
+
+mkdir -p ${CORE_PEER_MSPCONFIGPATH}
+
 fabric-ca-client enroll -d -u $ENROLLMENT_URL -M $CORE_PEER_MSPCONFIGPATH
 mv ${CORE_PEER_MSPCONFIGPATH}/cacerts/* ${CORE_PEER_MSPCONFIGPATH}/cacerts/ca.${DOMAIN}-cert.pem
 
