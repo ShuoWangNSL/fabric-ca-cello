@@ -34,7 +34,7 @@ fi
 DDIR=${SDIR}/${DATA}
 if [ -d ${DDIR} ]; then
    log "Cleaning up the data directory from previous run at $DDIR"
-   rm -rf ${SDIR}/data
+#   rm -rf ${SDIR}/data
 fi
 mkdir -p ${DDIR}/logs
 

@@ -267,6 +267,7 @@ Profiles:
 }
 
 function generateChannelArtifacts() {
+  cp /data/configtx.yaml /etc/hyperledger/fabric
   which configtxgen
   if [ "$?" -ne 0 ]; then
     fatal "configtxgen tool not found. exiting"
