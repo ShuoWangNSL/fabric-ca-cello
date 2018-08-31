@@ -279,22 +279,6 @@ function generateChannelArtifacts() {
   if [ "$?" -ne 0 ]; then
     fatal "Failed to generate orderer genesis block"
   fi
-
-  log "Generating channel configuration transaction at $CHANNEL_TX_FILE"
-  configtxgen -configPath /data -profile TwoOrgsChannel -outputCreateChannelTx $CHANNEL_TX_FILE -channelID $CHANNEL_NAME
-  if [ "$?" -ne 0 ]; then
-    fatal "Failed to generate channel configuration transaction"
-  fi
-
-  for ORG in $PEER_ORGS; do
-     initPeerOrgVars $ORG
-     log "Generating anchor peer update transaction for $ORG at $ANCHOR_TX_FILE"
-     configtxgen -configPath /data -profile TwoOrgsChannel -outputAnchorPeersUpdate $ANCHOR_TX_FILE \
-                 -channelID $CHANNEL_NAME -asOrg $ORG
-     if [ "$?" -ne 0 ]; then
-        fatal "Failed to generate anchor peer update for $ORG"
-     fi
-  done
 }
 
 set -e
