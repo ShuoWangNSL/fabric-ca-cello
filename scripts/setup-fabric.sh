@@ -16,7 +16,7 @@ function main {
    registerIdentities
    enrollIdentities
    #makeConfigTxYaml
-   #generateChannelArtifacts
+   generateChannelArtifacts
    log "Finished building channel artifacts"
    touch /$SETUP_SUCCESS_FILE
 }
