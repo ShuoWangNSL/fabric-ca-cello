@@ -30,7 +30,9 @@ rm -rf /tmp/tls
 
 # Enroll again to get the orderer's enrollment certificate (default profile)
 fabric-ca-client enroll -d -u $ENROLLMENT_URL -M $ORDERER_GENERAL_LOCALMSPDIR
-mv $ORDERER_GENERAL_LOCALMSPDIR/cacerts/* $ORDERER_GENERAL_LOCALMSPDIR/cacerts/ca.${DOMAIN}-cert.pem #rename
+mv $ORDERER_GENERAL_LOCALMSPDIR/cacerts/* $ORDERER_GENERAL_LOCALMSPDIR/cacerts/ca.${DOMAIN}-cert.pem #rename cacert
+mv $ORDERER_GENERAL_LOCALMSPDIR/signcerts/* $ORDERER_GENERAL_LOCALMSPDIR/signcerts/${ORDERER}.${DOMAIN}-cert.pem #rename signcert
+
 # Finish setting up the local MSP for the orderer
 finishMSPSetup $ORDERER_GENERAL_LOCALMSPDIR
 

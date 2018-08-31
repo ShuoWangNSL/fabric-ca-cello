@@ -26,7 +26,7 @@ DATA_DIR=/${CRYPTO_PEER}/${DOMAIN}/peers/${PEER}.${DOMAIN}
 DATA_TLSDIR=/${DATA_DIR}/tls
 mkdir -p ${DATA_TLSDIR}
 cp $CORE_PEER_TLS_KEY_FILE ${DATA_TLSDIR}/server.key
-cp $CORE_PEER_TLS_CERT_FILE ${DATA_TLSDIR}server.crt
+cp $CORE_PEER_TLS_CERT_FILE ${DATA_TLSDIR}/server.crt
 cp $FABRIC_CA_CLIENT_TLS_CERTFILES ${DATA_TLSDIR}/ca.crt
 rm -rf /tmp/tls
 
@@ -36,7 +36,8 @@ rm -rf /tmp/tls
 mkdir -p ${CORE_PEER_MSPCONFIGPATH}
 
 fabric-ca-client enroll -d -u $ENROLLMENT_URL -M $CORE_PEER_MSPCONFIGPATH
-mv ${CORE_PEER_MSPCONFIGPATH}/cacerts/* ${CORE_PEER_MSPCONFIGPATH}/cacerts/ca.${DOMAIN}-cert.pem
+mv ${CORE_PEER_MSPCONFIGPATH}/cacerts/* ${CORE_PEER_MSPCONFIGPATH}/cacerts/ca.${DOMAIN}-cert.pem #rename cacert
+mv ${CORE_PEER_MSPCONFIGPATH}/signcerts/* ${CORE_PEER_MSPCONFIGPATH}/signcerts/${PEER}.${DOMAIN}-cert.pem #rename signcert
 
 finishMSPSetup $CORE_PEER_MSPCONFIGPATH
 
