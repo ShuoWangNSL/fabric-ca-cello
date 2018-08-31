@@ -17,7 +17,7 @@ services:
       - FABRIC_CA_SERVER_DEBUG=true
       - BOOTSTRAP_USER_PASS=admin:adminpw
       - TARGET=/data/crypto-config/ordererOrganizations/example.com/ca
-      - TLSTARGET=/data/crypto-config/peerOrganizations/example.com/tlsca
+      - TLSTARGET=/data/crypto-config/ordererOrganizations/example.com/tlsca
       - TARGET_CERTFILE=/data/crypto-config/ordererOrganizations/example.com/ca/ca.example.com-cert.pem
       - FABRIC_ORGS=orderer org1 org2
     volumes:
